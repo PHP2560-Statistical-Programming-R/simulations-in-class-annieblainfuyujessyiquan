@@ -312,5 +312,7 @@ boot_ci =function(data, func, reps =1000, lower=.025, upper=.975) {
 
 ```{r}
 boot_ci(replicate(100, chain_game(100, .485, .01, 100000)), func = var)
-```
 
+boot_ci(replicate(100, chain_game(100, .48, .0125, 100000)), func = var)
+```
+The game with the higher initial probability has a lower variance than the game with the larger turn-probability increase. 
