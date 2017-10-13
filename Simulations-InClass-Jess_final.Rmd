@@ -144,6 +144,8 @@ fair_mean
 
 ############### METHOD THREE ####################################
 
+#does not run
+
 #minimum starting probability for each game is .48 and maximum is .50
 #using midpoint displacement to find the fairest starting probability of success for this game 
 min <- .48
@@ -199,6 +201,8 @@ fair_mean[i] <- mean(replicate(100, unfair_game(num_bets = 5000, p1 = increases[
 fair_mean
 
 ############### METHOD THREE ####################################
+
+#does not run
 
 #minimum increase for each hand for winning is .001 and maximum is .02
 #using midpoint displacement to find the fairest increment value for this game 
