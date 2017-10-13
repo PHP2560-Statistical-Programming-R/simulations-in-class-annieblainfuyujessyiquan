@@ -56,35 +56,32 @@ prob2
     c. the mean time you go bust, given that you go bust within the first 5000 hands.
     
 ```{r}
-rownames(time_end)<-c("time","bankroll")
-df<-data.frame(t(time_end))
-bankroll0<-df[df$bankroll==0,]
-mean_t<-mean(bankroll0$time)
-mean_t
+bankroll0<-time_end[,time_end[2,]==0]
+mean(bankroll0[1,])
 ```
 
     d. the mean and variance of your bankroll after 100 hands (including busts).
 
 ```{r}
 hand100<-matrix(replicate(1000,end(1000,100,0.5,100)),nrow=2,byrow=F)
-df100<-data.frame(hand100)
-mean( as.numeric(df100[2,]))
-var(as.numeric(df100[2,]))
+mean(hand100[2,])
+var(hand100[2,])
 ```
 
     e. the mean and variance of your bankroll after 500 hands (including busts).
     
 ```{r}
 hand500<-matrix(replicate(1000,end(1000,100,0.5,500)),nrow=2,byrow=F)
-df500<-data.frame(hand500)
-mean(as.numeric(df500[2,]))
-var(as.numeric(df500[2,]))
+mean(hand500[2,])
+var(hand500[2,])
 ```
 
  
 Note: you *must* stop playing if your player has gone bust. How will you handle this in the `for` loop?
 
 2. Repeat the previous problem with betting on black in American roulette, where the probability of winning on any spin is 18/38 for an even payout.
+
+** A simple situation is that when the green turns out, you still lose 100 **
 a.
 ```{r}
 roulette<-matrix(replicate(1000,end(1000,100,18/38,5000)),nrow=2,byrow=F)
@@ -98,27 +95,65 @@ prob4
 ```
 c.
 ```{r}
-rownames(roulette)<-c("time","bankroll")
-dfr<-data.frame(t(roulette))
-r.bankroll0<-dfr[dfr$bankroll==0,]
-mean_rt<-mean(r.bankroll0$time)
-mean_rt
+r.bankroll0<-roulette[,roulette[2,]==0]
+mean(r.bankroll0[1,])
 ```
 d.
 ```{r}
 r100<-matrix(replicate(1000,end(1000,100,18/38,100)),nrow=2,byrow=F)
-dfr100<-data.frame(r100)
-mean( as.numeric(dfr100[2,]))
-var(as.numeric(dfr100[2,]))
+mean(r100[2,])
+var(r100[2,])
 ```
 e.
 ```{r}
 r500<-matrix(replicate(1000,end(1000,100,18/38,500)),nrow=2,byrow=F)
-dfr500<-data.frame(r500)
-mean(as.numeric(dfr500[2,]))
-var(as.numeric(dfr500[2,]))
+mean(r500[2,])
+var(r500[2,])
 ```
 
+** Think more complicated. If green color turns out, the 100 bets will be halved. **
+a.
+```{r}
+ar<-function(bankroll,bet,n){for(i in 1:n){
+  # In the simulation, when x is an even number in seq(2,36,2), which denotes black color, you win 100 bets. When x is an odd number in seq(1,36,2), which denotes red color, you lose 100 bets.When x is 37 or 38, which denotes the green color, the 100 bets are halved.
+  x<-sample(seq(1,38,1),1)  
+  if(x %in% seq(2,36,2)){
+    bankroll<-bankroll+bet}
+else if(x %in%seq(1,36,2)){bankroll<-bankroll-bet}
+  else{bankroll<-bankroll-bet/2}
+  if(bankroll==0) break
+}
+return(c(i,bankroll))
+}
+ar_end<-matrix(replicate(1000,ar(1000,100,5000)),nrow=2,byrow=F)
+bust100<-sum(ar_end[1,]<100)/length(ar_end[1,])
+bust100
+```
+b.
+```{r}
+bust500<-sum(ar_end[1,]<500)/length(ar_end[1,])
+bust500
+```
+
+c.
+```{r}
+ar0<-ar_end[,ar_end[2,]==0]
+mean_bust<-mean(ar0[1,])
+mean_bust
+```
+
+d.
+```{r}
+ar_100<-matrix(replicate(1000,ar(1000,100,100)),nrow=2,byrow=F)
+mean(ar_100[2,])
+var(ar_100[2,])
+```
+e.
+```{r}
+ar_500<-matrix(replicate(1000,ar(1000,100,500)),nrow=2,byrow=F)
+mean(ar_500[2,])
+var(ar_500[2,])
+```
 
 3. **Markov Chains**. Suppose you have a game where the probability of winning on your first hand is 48%; each time you win, that probability goes up by one percentage point for the next game (to a maximum of 100%, where it must stay), and each time you lose, it goes back down to 48%. Assume you cannot go bust and that the size of your wager is a constant $100.
     a. Is this a fair game? Simulate one hundred thousand sequential hands to determine the size of your return. Then repeat this simulation 99 more times to get a range of values to calculate the expectation.
