@@ -91,7 +91,7 @@ return(list(bets=i,bankroll=bank[i]))
 3. **Markov Chains**. Suppose you have a game where the probability of winning on your first hand is 48%; each time you win, that probability goes up by one percentage point for the next game (to a maximum of 100%, where it must stay), and each time you lose, it goes back down to 48%. Assume you cannot go bust and that the size of your wager is a constant $100.
 ```{r}
 unfair_game <- function(num_bets, p1 = .48, increase = .01){
-bank <- rep(NA, num_bets+1)
+bank <- rep(NA, num_bets)
 bank[1] = 100
 chance = p1
 
@@ -108,16 +108,17 @@ chance <- p1
 return(bank[num_bets])
 }
 
-
 ```
 a. Is this a fair game? Simulate one hundred thousand sequential hands to determine the size of your return. Then repeat this simulation 99 more times to get a range of values to calculate the expectation.
 ```{r}
 unfair_game(100000)
 
 mean(replicate(99, unfair_game(100000)))
+#this is not a fair game because the expectation of the resulting bankroll is much less than the starting bank
 
 ```
 b. Repeat this process but change the starting probability to a new value within 2% either way. Get the expected return after 100 repetitions. Keep exploring until you have a return value that is as fair as you can make it. Can you do this automatically?
+
 ```{r, eval = FALSE}
 
 ############### METHOD ONE ####################################
@@ -137,6 +138,62 @@ probs <- seq(.48,.50, .00025)
 fair_mean<-rep(NA, length(probs))
 for(i in 1:length(probs)) {
 fair_mean[i] <- mean(replicate(100, unfair_game(num_bets = 5000, p1 = probs[i])),na.rm=TRUE)
+}
+#find the place where there is a sign change
+fair_mean
+
+############### METHOD THREE ####################################
+
+#minimum starting probability for each game is .48 and maximum is .50
+#using midpoint displacement to find the fairest starting probability of success for this game 
+min <- .48
+max <- .50
+fair_mean <- NA
+#deciding that a fair game will result is, on average winning or loosing between $0 and $1000
+while(!(fair_mean %in% -900:1100)){
+  middle <- (min + max) / 2
+  fair_mean <- mean(replicate(100, unfair_game(num_bets = 100000, p1 = middle)))
+  #if the mean is too small - change the bounds to the midpoint and max, then take midpoint of those points
+  if(fair_mean <= -900) {
+    min <- middle
+  #if the mean is too big - change the bounds to the min and midpoint, then take midpoint of those points
+  } else if(fair_mean >= 1100) {
+    max <- middle
+  } else {
+    fair_percentage <- middle
+    break
+  }
+}
+fair_percentage
+```
+c. Repeat again, keeping the initial probability at 48%, but this time change the probability increment to a value different from 1%. Get the expected return after 100 repetitions. Keep changing this value until you have a return value that is as fair as you can make it. 
+```{r, eval = FALSE}
+unfair_game(100000)
+
+mean(replicate(99, unfair_game(100000)))
+
+```
+b. Repeat this process but change the starting probability to a new value within 2% either way. Get the expected return after 100 repetitions. Keep exploring until you have a return value that is as fair as you can make it. Can you do this automatically?
+```{r, eval = FALSE}
+
+############### METHOD ONE ####################################
+unfair_game(num_bets = 100000, increase = .01)
+mean(replicate(100, unfair_game(num_bets = 100000, increase = .01)))
+
+unfair_game(num_bets = 100000, increase = .02)
+mean(replicate(100, unfair_game(num_bets = 100000, increase = .02))
+
+unfair_game(num_bets = 100000, increase = .015)
+mean(replicate(100, unfair_game(num_bets = 100000, increase = .015)))
+
+unfair_game(num_bets = 100000, increase = .001)
+mean(replicate(100, unfair_game(num_bets = 100000, increase = .001)))
+
+############### METHOD TWO ####################################
+increases <- seq(.01,.02, .001)
+fair_mean<-rep(NA, length(increases))
+for(i in 1:length(increases)) {
+fair_mean[i] <- mean(replicate(100, unfair_game(num_bets = 5000, p1 = increases[i])),na.rm=TRUE)
 }
 #find the place where there is a sign change
 fair_mean
@@ -164,9 +221,6 @@ break
 }
 }
 fair_increase
-```
-c. Repeat again, keeping the initial probability at 48%, but this time change the probability increment to a value different from 1%. Get the expected return after 100 repetitions. Keep changing this value until you have a return value that is as fair as you can make it. 
-```{r, eval = FALSE}
 
 ```
 
@@ -195,6 +249,10 @@ quantile(statistic, probs = c(.025,.975))
 5. For problems 3b and 3c, you calculated a mean value. Because you saved these final results in a vector, use the bootstrap to estimate the variance of the return in each case for your final answer. Once you have these results, which game has the smaller variance in returns?
 
 ```{r}
-
+#the game with the optimized starting probability has a smaller variance. 
+three_b <- replicate(100, unfair_game(num_bets = 100000, p1 = .489))
+boot_ci(three_b)
+three_c <- replicate(100, unfair_game(num_bets = 100000, p1 = .48, increase = .125))
+boot_ci(three_c)
 ```
 
